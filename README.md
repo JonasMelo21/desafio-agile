@@ -1,6 +1,6 @@
 # 🧠 Desafio Técnico — API de Classificação de Saúde
 
-Este repositório contém a solução completa para um **desafio técnico de Machine Learning focado em NLP (Processamento de Linguagem Natural)**.
+Este repositório contém a solução completa para um **desafio técnico de Machine Learning**.
 O objetivo foi **construir um pipeline funcional de ponta a ponta**, capaz de ler, processar e interpretar históricos de chat clínico para **identificar condições de saúde** dos clientes — tudo integrado a uma **API Flask pronta para consumo.**
 
 ---
@@ -11,7 +11,7 @@ O objetivo deste desafio foi desenvolver um modelo de NLP capaz de **identificar
 
 A entrega principal é uma **API Flask** que recebe um `client_id`, consulta o modelo e retorna uma lista das condições previstas, tratando também casos de `404 Not Found` para clientes inexistentes.
 
-Conforme a expectativa do desafio, o foco principal não foi a acurácia de um modelo perfeito, mas sim **demonstrar um processo claro de investigação**, tomada de decisão e a construção de um pipeline *end-to-end* funcional.
+Conforme a expectativa do desafio, o foco principal  **demonstrar um processo claro de investigação**, tomada de decisão e a construção de um pipeline *end-to-end* funcional.
 
 ---
 
