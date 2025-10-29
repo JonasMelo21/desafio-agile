@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Desafio - API de Saúde</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+               background-color: #f4f7f6; color: #333; max-width: 600px; 
+               margin: 40px auto; padding: 20px; box-sizing: border-box; }
+        h1 { color: #005a9c; }
+        input { width: 100px; padding: 8px; font-size: 16px; margin-right: 10px; }
+        button { padding: 8px 15px; font-size: 16px; background-color: #007bff; 
+                 color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background-color: #0056b3; }
+        #results { margin-top: 20px; padding: 15px; background-color: #fff; 
+                   border: 1px solid #ddd; border-radius: 4px; min-height: 50px; }
+        .error { color: #d9534f; }
+        .success { color: #5cb85c; }
+    </style>
+</head>
+<body>
+
+    <h1>🧠 Teste da API de Saúde</h1>
+    <p>Insira um ID de cliente (ex: 2, 3 ou 999) para prever suas condições de saúde.</p>
+    
+    <div>
+        <input type="number" id="client_id_input" placeholder="ID do Cliente">
+        <button id="search_button">Buscar</button>
+    </div>
+    
+    <div id="results">
+        </div>
+
+    <script>
+        // O JavaScript "sem firula" que faz a mágica
+        
+        const button = document.getElementById('search_button');
+        const input = document.getElementById('client_id_input');
+        const resultsDiv = document.getElementById('results');
+
+        button.addEventListener('click', async () => {
+            const clientId = input.value;
+            
+            // 1. Limpa resultados e verifica se há um ID
+            resultsDiv.innerHTML = 'Buscando...';
+            if (!clientId) {
+                resultsDiv.innerHTML = '<p class="error">Por favor, insira um ID.</p>';
+                return;
+            }
+            
+            try {
+                // 2. Chama a nossa própria API Flask
+                const response = await fetch(`/predict/${clientId}`);
+                const data = await response.json();
+                
+                // 3. Mostra os resultados na tela
+                if (response.status === 404) {
+                    // Erro 404 (Cliente não encontrado)
+                    resultsDiv.innerHTML = `<p class="error"><b>Erro 404:</b> ${data.erro}</p>`;
+                } else if (!response.ok) {
+                    // Outros erros
+                    throw new Error(data.erro || 'Erro desconhecido');
+                } else {
+                    // Sucesso!
+                    const conditions = data.condicoes_previstas;
+                    if (conditions.length > 0) {
+                        const items = conditions.map(item => `<li>${item}</li>`).join('');
+                        resultsDiv.innerHTML = `
+                            <p class="success"><b>Condições previstas para o Cliente ${data.client_id}:</b></p>
+                            <ul>${items}</ul>
+                        `;
+                    } else {
+                        resultsDiv.innerHTML = `<p>Nenhuma condição prevista encontrada para o Cliente ${data.client_id}.</p>`;
+                    }
+                }
+                
+            } catch (err) {
+                resultsDiv.innerHTML = `<p class="error"><b>Erro na requisição:</b> ${err.message}</p>`;
+            }
+        });
+    </script>
+
+</body>
+</html>

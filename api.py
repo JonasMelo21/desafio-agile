@@ -1,6 +1,6 @@
 import pandas as pd
 import joblib
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, render_template
 
 # --- 1. Carregamento de Artefatos e Dados ---
 print("Carregando artefatos e dados...")
@@ -58,7 +58,8 @@ app = Flask(__name__)
 
 @app.route("/")
 def home():
-    return "<h1>API do Desafio Técnico</h1><p>Use o endpoint /predict/&lt;client_id&gt; para testar.</p>"
+    # Isso vai procurar e retornar o 'index.html' da pasta 'templates'
+    return render_template('index.html')
 
 # --- 4. O Endpoint de Predição ---
 

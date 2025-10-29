@@ -1,121 +1,169 @@
-Desafio Técnico: API de Classificação de Saúde
-Este repositório contém a solução para um desafio técnico de Machine Learning focado em NLP (Processamento de Linguagem Natural). O objetivo é construir um pipeline completo, desde a análise de dados até uma API funcional.
+# 🧠 Desafio Técnico — API de Classificação de Saúde
 
-🎯 O Desafio
-O desafio consistia em desenvolver um modelo de Machine Learning capaz de identificar condições de saúde de clientes (ex: Obesidade, Diabetes, Tabagismo) com base em seus históricos de chat.
+Este repositório contém a solução completa para um **desafio técnico de Machine Learning focado em NLP (Processamento de Linguagem Natural)**.
+O objetivo foi **construir um pipeline funcional de ponta a ponta**, capaz de ler, processar e interpretar históricos de chat clínico para **identificar condições de saúde** dos clientes — tudo integrado a uma **API Flask pronta para consumo.**
 
-A entrega final deveria ser uma API que:
+---
 
-Recebesse um client_id como parâmetro.
+## 🎯 O Desafio
 
-Retornasse uma lista com as condições de saúde previstas para esse cliente.
+O objetivo deste desafio foi desenvolver um modelo de NLP capaz de **identificar condições de saúde** (como Obesidade, Diabetes, etc.) com base no histórico de mensagens de um cliente.
 
-Retornasse um erro 404 Not Found caso o cliente não existisse.
+A entrega principal é uma **API Flask** que recebe um `client_id`, consulta o modelo e retorna uma lista das condições previstas, tratando também casos de `404 Not Found` para clientes inexistentes.
 
-O foco principal era avaliar o processo de investigação e as tomadas de decisão.
+Conforme a expectativa do desafio, o foco principal não foi a acurácia de um modelo perfeito, mas sim **demonstrar um processo claro de investigação**, tomada de decisão e a construção de um pipeline *end-to-end* funcional.
 
-💡 Abordagem e Pipeline de Dados
-O projeto foi estruturado seguindo um pipeline de ML padrão, desde a exploração até a implantação de uma Prova de Conceito (PoC).
+---
 
-1. Exploração e Pré-processamento (EDA)
-Análise de Chaves: Foi feita a análise de todos os CSVs para entender o esquema e as relações. As chaves client_id, chat_message_id (nos clientes) e chat_channel_id (nos chats) foram mapeadas.
+## 💡 Abordagem e Pipeline de Dados
 
-Análise do Alvo (y): O client_conditions.csv foi identificado como o "gabarito" (alvo) do modelo.
+O projeto foi desenvolvido seguindo uma **linha lógica de investigação e prototipagem rápida**, priorizando clareza e reprodutibilidade.
 
-Análise dos Dicionários: Os arquivos seed_*.csv foram identificados como tabelas de mapeamento (ex: cid10 para nomes de doenças).
+### 1\. 🔍 Exploração e Pré-Processamento (EDA)
 
-2. Engenharia de Features (Preparação do X)
-A simples concatenação de mensagens misturaria as falas do paciente e do profissional. Para dar contexto ao modelo, o histórico de chat foi transformado em um "roteiro" formatado:
+  - **Análise de relacionamentos** entre os CSVs (`client`, `chat_history`, `client_conditions`, `seed_*`), mapeando chaves e integridades.
+  - **Identificação do alvo (`y`)**: o arquivo `client_conditions.csv` foi definido como rótulo do modelo.
+  - **Entendimento dos dicionários (`seed_*`)**: interpretados como tabelas de referência, úteis para enriquecer e validar as condições de saúde.
 
-As mensagens foram ordenadas por data (created_date_brt).
+### 2\. 🧱 Engenharia de Features (Preparação do X)
 
-Um prefixo (client: ou user: ) foi adicionado a cada mensagem com base na coluna sender.
+  - Para preservar o contexto do diálogo, as mensagens foram **ordenadas por data** e **prefixadas** com o remetente (`client:` ou `user:`).
+  - Todas as mensagens de um cliente foram **concatenadas** em um único documento textual — resultando em uma representação contextualizada e sem ruído.
+  - Esse texto passou por **vetorização com TF-IDF**, otimizando a entrada para o modelo.
 
-Todas as mensagens de um mesmo cliente foram agrupadas em um único documento de texto.
+### 3\. 🎯 Preparação do Alvo (Preparação do y)
 
-3. Preparação do Alvo (Preparação do y)
-Para o modelo de classificação multi-rótulo, o df_client_conditions (que estava em formato "longo") foi "pivotado" usando pd.crosstab. Isso resultou em um DataFrame onde cada cliente tinha uma linha e cada condição (e66, g47, etc.) era uma coluna binária (0 ou 1).
+  - O dataset de condições foi convertido de formato *longo* para *wide*, via `pandas.crosstab`, gerando um **DataFrame multi-rótulo** (cada coluna = uma condição binária).
+  - Exemplo:
+    ```
+    client_id | e66 | g47 | z72
+         1    |  1  |  0  |  1
+    ```
 
-⚠️ Principal Insight e Tomada de Decisão
-A etapa de investigação (o foco do desafio) revelou uma limitação crítica nos dados de treino.
+-----
 
-Ao cruzar os dados, descobrimos que:
+## ⚠️ Insight Principal e Tomada de Decisão
 
-Clientes com histórico de chat (df_X): 3
+Durante a exploração, identificou-se uma limitação crítica:
 
-Clientes com "gabarito" (rótulos de condição df_y): 2
+| Tipo de Dado | Nº de Clientes |
+| :--- | :---: |
+| Histórico de Chat (`X`) | 3 |
+| Condições (`y`) | 2 |
+| Interseção útil (X ∩ y) | **2 clientes** |
 
-Resultado: A interseção (dados treináveis) continha apenas 2 amostras.
+➡️ Ou seja, apenas **2 amostras completas** estavam disponíveis para treino — inviabilizando uma modelagem estatisticamente significativa.
 
-Tomada de Decisão Estratégica
-Sendo estatisticamente inviável treinar um modelo preditivo real ou realizar uma divisão treino/teste com 2 amostras, o foco foi alterado para provar a funcionalidade do pipeline de ponta-a-ponta (Proof of Concept).
+### 🧭 Estratégia adotada
 
-Um pipeline de TfidfVectorizer + MultiOutputClassifier(LogisticRegression()) foi treinado nessas 2 amostras. O objetivo não foi a acurácia, mas sim a criação dos artefatos (vectorizer.joblib e model.joblib) para demonstrar que a API é capaz de carregar, pré-processar dados novos e consumir um modelo treinado.
+Diante disso, a decisão foi **não comprometer o rigor metodológico tentando forçar resultados numéricos**, mas sim **entregar uma Prova de Conceito (PoC)** funcional e bem estruturada:
 
-🚀 Como Executar e Testar a API
-O projeto inclui uma API Flask (api.py) que consome os artefatos de modelo treinados.
+  - Modelo: `MultiOutputClassifier(LogisticRegression())`
+  - Vetorizador: `TfidfVectorizer()`
+  - Objetivo: Demonstrar **a arquitetura do pipeline**, geração de artefatos (`model.joblib` e `vectorizer.joblib`) e funcionamento completo da **API Flask**.
 
-1. Pré-requisitos
-Python 3.x
+-----
 
-Git
+## 🚀 Execução e Teste da API
 
-2. Configuração do Ambiente
-(Assumindo que o repositório já foi clonado)
+A API foi desenvolvida com **Flask**, consumindo os artefatos treinados e expondo endpoints REST.
 
-Bash
+### 1\. 🧩 Pré-requisitos
 
-# 1. Crie um ambiente virtual
+  - Python 3.x
+  - Git
+
+### 2\. ⚙️ Configuração do ambiente
+
+```bash
+# Clone o repositório
+git clone https://github.com/seuusuario/desafio-agile.git
+cd desafio-agile
+
+# Crie e ative o ambiente virtual
 python -m venv venv
+source venv/bin/activate    # Linux/Mac
+# .\venv\Scripts\activate   # Windows
 
-# 2. Ative o ambiente
-# (No Linux/Mac)
-source venv/bin/activate
-# (No Windows)
-# .\venv\Scripts\activate
-
-# 3. Instale as dependências
+# Instale as dependências
 pip install -r requirements.txt
-3. Rodando a API
-Bash
+```
 
-# 4. Inicie o servidor Flask
+### 3\. ▶️ Rodando a API
+
+```bash
+# Inicie o servidor Flask
 python api.py
-O terminal indicará que o servidor está rodando em http://127.0.0.1:5000/.
+```
 
-4. Testando os Endpoints
-Abra seu navegador ou use uma ferramenta como curl para testar os endpoints:
+O terminal exibirá:
 
-Rota Raiz (Home): http://127.0.0.1:5000/
+```
+* Running on http://127.0.0.1:5000/
+```
 
-Teste (Cliente 2 - Estava no treino): http://127.0.0.1:5000/predict/2
+### 4\. 🔎 Testando os Endpoints
 
-Teste (Cliente 3 - Não estava no treino): http://127.0.0.1:5000/predict/3
+| Tipo de Teste | URL | Descrição |
+| :--- | :--- | :--- |
+| ✅ **Home** | [http://127.0.0.1:5000/](http://127.0.0.1:5000/) | Página inicial da API |
+| ✅ **Cliente 2** | [http://127.0.0.1:5000/predict/2](http://127.0.0.1:5000/predict/2) | Cliente presente no treino |
+| ✅ **Cliente 3** | [http://127.0.0.1:5000/predict/3](http://127.0.0.1:5000/predict/3) | Cliente fora do treino |
+| ❌ **Cliente 999** | [http://127.0.0.1:5000/predict/999](http://127.0.0.1:5000/predict/999) | Cliente inexistente (erro 404) |
 
-Teste (Cliente 404 - Não Encontrado): http://127.0.0.1:5000/predict/999
+-----
 
-📂 Estrutura do Repositório
-/desafio-agile
-|
-|-- README.md               # Este arquivo
-|-- api.py                  # O script da API Flask
-|-- requirements.txt        # Dependências do Python
-|
-|-- artifacts/              # Modelos treinados e serializados
-|   |-- model.joblib
-|   |-- vectorizer.joblib
-|
-|-- data/                   # Dados brutos fornecidos no desafio
-|   |-- chat_history.csv
-|   |-- client.csv
-|   |-- client_conditions.csv
-|   |-- seed_*.csv
-|
-|-- notebooks/              # Notebook de exploração e treinamento (EDA)
-|   |-- Projeto_Agile.ipynb
-|
-|-- docs/                   # Documentação original dos dados
-|   |-- data_readme.md
-|   |-- data_readme.pdf
-|
-|-- venv/                   # (Ignorado pelo Git)
+## 🗂️ Estrutura do Repositório
+
+```
+desafio-agile
+├─ README.md
+│   → Documento principal do projeto, descreve objetivos, instalação, uso e estrutura geral.
+│
+├─ api.py
+│   → Script da API desenvolvida em Flask.
+│     Responsável por carregar o modelo treinado e servir previsões via requisições HTTP.
+│
+├─ requirements.txt
+│   → Lista de dependências Python necessárias para executar o projeto (Flask, joblib, pandas, etc).
+│
+├─ artifacts
+│   → Diretório com artefatos do modelo de Machine Learning.
+│     ├─ model.joblib             → Modelo final treinado e serializado.
+│     └─ vectorizer.joblib        → Vetorizador usado no pré-processamento de texto.
+│
+├─ data
+│   → Contém os dados utilizados no desenvolvimento e teste do projeto.
+│     ├─ chat_history.csv         → Histórico de mensagens e interações do cliente.
+│     ├─ client.csv               → Informações cadastrais dos clientes.
+│     ├─ client_conditions.csv    → Condições de saúde associadas a cada cliente.
+│     ├─ seed_ciap_chapters.csv   → Dados seed referentes aos capítulos do CIAP.
+│     ├─ seed_ciap_components.csv → Dados seed referentes aos componentes do CIAP.
+│     └─ seed_ciap_raw.csv        → Dados brutos originais do CIAP.
+│
+├─ notebooks
+│   → Contém notebooks Jupyter usados na exploração e modelagem dos dados.
+│     └─ Projeto_Agile.ipynb      → Notebook principal de EDA (análise exploratória),
+│                                   pré-processamento, treinamento e avaliação do modelo.
+```
+
+-----
+
+## 🧩 Principais Aprendizados e Destaques Técnicos
+
+  - 🧠 **Capacidade de análise sob limitação de dados** — foco na solução e não na frustração.
+  - 🏗️ **Pipeline modular e reprodutível**, pronto para ser expandido com novos dados.
+  - 🔍 **NLP aplicado a contexto real de linguagem clínica**.
+  - 🧰 **Entrega funcional de ponta a ponta:** dados → modelo → artefatos → API.
+  - 🚀 **Clean code e documentação completa**, facilitando auditoria e evolução do projeto.
+
+-----
+
+## 🔮 Melhorias Futuras e Visão de Longo Prazo
+
+O *pipeline* atual foi construído como uma Prova de Conceito robusta. Dada a limitação de dados de treino (N=2), o próximo passo lógico seria evoluir a solução nas seguintes frentes:
+
+1.  **Ingestão de Dados:** O primeiro passo seria obter um conjunto de dados de treino maior e mais representativo para permitir uma modelagem estatística real.
+2.  **Modelagem NLP Avançada:** Substituir o *baseline* (TF-IDF + Regressão Logística) por modelos de linguagem baseados em Transformers (ex: **BERTimbau**). Esses modelos entendem o contexto, a semântica e as negações (ex: "eu *não* tenho diabetes" vs. "eu tenho diabetes"), o que aumentaria drasticamente a acurácia.
+3.  **Modelo Multimodal:** Utilizar os metadados dos clientes (`idade`, `genero`, `cidade`) que foram descartados neste *baseline*. Um modelo mais avançado poderia combinar as *features* de texto (do BERT) com as *features* tabulares, criando um sistema de recomendação mais completo.
+4.  **Extração de Informação (IE) e *Weak Supervision*:** Usar os arquivos `seed_*.csv` (com critérios de inclusão e exclusão) não apenas como dicionários, mas como base para um sistema de *Weak Supervision*. Poderíamos criar regras (ex: regex, spaCy) para identificar menções a "glicose alta" ou "fumo" e usá-las para rotular automaticamente milhares de chats, criando um conjunto de treino maior sem esforço manual.
