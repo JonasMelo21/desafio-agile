@@ -13,8 +13,16 @@ desafio-agile                      //
 │  ├─ seed_ciap_chapters.csv       //
 │  ├─ seed_ciap_components.csv     //
 │  └─ seed_ciap_raw.csv            //
+├─ mytree.md                       //
 ├─ notebooks                       //
 │  └─ Projeto_Agile.ipynb          //
-└─ requirements.txt                //
+├─ requirements.txt                //
+├─ static                          //
+│  ├─ css                          //
+│  │  └─ index.css                 //
+│  └─ js                           //
+│     └─ index.js                  //
+└─ templates                       //
+   └─ index.html                   //
 
 ```
