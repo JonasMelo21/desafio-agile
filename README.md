@@ -1,7 +1,3 @@
-Aqui está o `README.md` refinado, com as seções duplicadas consolidadas e todos os traços de IA e linhas horizontais removidos, pronto para o seu repositório.
-
------
-
 # 🧠 Desafio Técnico — API de Classificação de Saúde
 
 Este repositório contém a solução completa para um **desafio técnico de Machine Learning**.
